@@ -1,0 +1,161 @@
+using f_open, f_read, f_write, f_close, f_seek, f_gets, f_getc from "./shared.json";
+
+export readonly var Print = fun (value, end = "\n", f:File = null) {
+
+    var content = ((value instanceof string) ? value : string(value)) + ((end instanceof string) ? end : string(end));
+    if (f)
+    {
+        var fd = f.GetFd();
+        if (fd > 0)
+        {
+            f_write(fd, content, content.Length());
+        }
+        else
+        {
+            f_write(1, content, content.Length());
+        }
+    }
+    else
+    {
+        f_write(1, content, content.Length());
+    }
+};
+
+export readonly var Input = fun (comment:string = "") {
+    Print(comment, end = "");
+    var r = f_gets();
+    return r;
+};
+
+export readonly var GetChar = fun () {
+    return f_getc();
+};
+
+export class ValueError {
+    export message:string;
+    export fun constructor (value:string)
+    {
+        message = value;
+    }
+
+    export fun ToString()
+    {
+        return message;
+    }
+}
+
+export class File {
+    export static readonly O_RDONLY = 0x0000;
+    export static readonly O_WRONLY = 0x0001;
+    export static readonly O_RDWR = 0x0002;
+    export static readonly O_APPEND = 0x0008;
+    export static readonly O_CREAT = 0x0100;
+    export static readonly O_TRUNC = 0x0200;
+    export static readonly O_EXCL = 0x0400;
+    export static readonly O_ACCMODE = (File.O_RDONLY|File.O_WRONLY|File.O_RDWR);
+
+    export static readonly O_RAW = 0x8000;
+    export static readonly O_NOINHERIT = 0x0080;
+    export static readonly O_TEMPORARY = 0x0040;
+    export static readonly O_SHORT_LIVED = 0x1000;
+
+    export static readonly O_SEQUENTIAL = 0x0020;
+    export static readonly O_RANDOM = 0x0010;
+
+    export static readonly S_IFMT = 0xF000;
+    export static readonly S_IFDIR = 0x4000;
+    export static readonly S_IFCHR = 0x2000;
+    export static readonly S_IFREG = 0x8000;
+    export static readonly S_IREAD = 0x0100;
+    export static readonly S_IWRITE = 0x0080;
+    export static readonly S_IEXEC = 0x0040;
+    export static readonly S_IFIFO = 0x1000;
+    export static readonly S_IFBLK = 0x3000;
+
+    export static readonly S_IRWXU = (File.S_IREAD | File.S_IWRITE | File.S_IEXEC);
+    export static readonly S_IXUSR = File.S_IEXEC;
+    export static readonly S_IWUSR = File.S_IWRITE;
+    export static readonly S_IRUSR = File.S_IREAD;
+
+    export static readonly S_IRGRP = (File.S_IRUSR >> 3);
+    export static readonly S_IWGRP = (File.S_IWUSR >> 3);
+    export static readonly S_IXGRP = (File.S_IXUSR >> 3);
+    export static readonly S_IRWXG = (File.S_IRWXU >> 3);
+
+    export static readonly S_IROTH = (File.S_IRGRP >> 3);
+    export static readonly S_IWOTH = (File.S_IWGRP >> 3);
+    export static readonly S_IXOTH = (File.S_IXGRP >> 3);
+    export static readonly S_IRWXO = (File.S_IRWXG >> 3);
+
+    export static readonly SEEK_SET = 0;
+    export static readonly SEEK_CUR = 1;
+    export static readonly SEEK_END = 2;
+
+    fd:int = -1;
+    _flag:int = 0;
+    _mode:int = 0;
+    _path:string;
+
+    export fun constructor (path:string, flag:int = File.O_RDWR, mode:int = File.S_IWUSR | File.S_IRUSR) {
+        fd = f_open(path, flag, mode);
+        if (fd == -1)
+        {
+            return null;
+        }
+        _flag = flag;
+        _mode = mode;
+        _path = path;
+    }
+
+    export fun Read(count:int = -1) {
+        if (fd < 0) {
+            throw ValueError("I/O operation on closed file");
+        }
+
+        return f_read(fd, count);
+    }
+
+    export fun Write(content) {
+        if (fd < 0) {
+            throw ValueError("I/O operation on closed file");
+        }
+
+        if (content instanceof string)
+        {
+            return f_write(fd, content, content.Length());
+        }
+        else
+        {
+            var data = string(content);
+            return f_write(fd, data, data.Length());
+        }
+    }
+
+    export fun Seek(offset:int, whence:int = File.SEEK_SET) {
+        if (fd < 0) {
+            throw ValueError("I/O operation on closed file");
+        }
+
+        return f_seek(fd, offset, whence);
+    }
+
+    export fun Close() {
+        if (fd < 0) {
+            throw ValueError("I/O operation on closed file");
+        }
+
+        var r = f_close(fd);
+        if (r < 0)
+        {
+            return r;
+        }
+
+        fd = -1;
+        
+        return r;
+    }
+
+    export fun GetFd {
+        return fd;
+    }
+}

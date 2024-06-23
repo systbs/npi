@@ -1,0 +1,31 @@
+Not Package Manager Help
+=====================
+
+Usage:
+  npi [OPTION] <package_name>[=<version>]
+
+Options:
+  -i, --install      Install the specified package(s).
+                     Example: npi -i package1 package2
+  -u, --update       Update the specified package(s).
+                     Example: npi -u package1 package2
+  -r, --remove       Remove the specified package(s).
+                     Example: npi -r package1 package2
+  -h, --help         Display this help message.
+
+Description:
+  This package manager allows you to manage software packages. You can
+  install, update, or remove packages using the corresponding options.
+
+Examples:
+  Install packages:
+    npi -i package1 package2
+
+  Update packages:
+    npi -u package1 package2
+
+  Remove packages:
+    npi -r package1 package2
+
+  Display help:
+    npi -h

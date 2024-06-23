@@ -1,0 +1,2 @@
+sudo apt install libcurl4-openssl-dev
+sudo apt install libzip-dev
