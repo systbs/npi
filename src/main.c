@@ -841,7 +841,8 @@ int npi_update(Config *config, const char *arg)
                     int r = 0;
                     if (read_dependencies(json_filepath, &dependency_list) == 0)
                     {
-                        printf("Dependencies:\n");
+                        if (dependency_list.num_dependencies > 0)
+                            printf("Dependencies:\n");
                         for (int i = 0; i < dependency_list.num_dependencies; i++)
                         {
                             printf("%s=%s\n", dependency_list.dependencies[i].name, dependency_list.dependencies[i].version);
@@ -875,7 +876,8 @@ int npi_update(Config *config, const char *arg)
         int r = 0;
         if (read_dependencies(json_filepath, &dependency_list) == 0)
         {
-            printf("Dependencies:\n");
+            if (dependency_list.num_dependencies > 0)
+                printf("Dependencies:\n");
             for (int i = 0; i < dependency_list.num_dependencies; i++)
             {
                 printf("%s=%s\n", dependency_list.dependencies[i].name, dependency_list.dependencies[i].version);
@@ -1002,7 +1004,8 @@ int npi_update(Config *config, const char *arg)
                 int r = 0;
                 if (read_dependencies(json_filepath, &dependency_list) == 0)
                 {
-                    printf("Dependencies:\n");
+                    if (dependency_list.num_dependencies > 0)
+                        printf("Dependencies:\n");
                     for (int i = 0; i < dependency_list.num_dependencies; i++)
                     {
                         printf("%s=%s\n", dependency_list.dependencies[i].name, dependency_list.dependencies[i].version);
@@ -1130,7 +1133,8 @@ int npi_update(Config *config, const char *arg)
             int r = 0;
             if (read_dependencies(json_filepath, &dependency_list) == 0)
             {
-                printf("Dependencies:\n");
+                if (dependency_list.num_dependencies > 0)
+                    printf("Dependencies:\n");
                 for (int i = 0; i < dependency_list.num_dependencies; i++)
                 {
                     printf("%s=%s\n", dependency_list.dependencies[i].name, dependency_list.dependencies[i].version);
@@ -1182,7 +1186,8 @@ int npi_install(Config *config, const char *arg)
         int r = 0;
         if (read_dependencies(json_filepath, &dependency_list) == 0)
         {
-            printf("Dependencies:\n");
+            if (dependency_list.num_dependencies > 0)
+                printf("Dependencies:\n");
             for (int i = 0; i < dependency_list.num_dependencies; i++)
             {
                 printf("%s=%s\n", dependency_list.dependencies[i].name, dependency_list.dependencies[i].version);
@@ -1306,7 +1311,8 @@ int npi_install(Config *config, const char *arg)
             int r = 0;
             if (read_dependencies(json_filepath, &dependency_list) == 0)
             {
-                printf("Dependencies:\n");
+                if (dependency_list.num_dependencies > 0)
+                    printf("Dependencies:\n");
                 for (int i = 0; i < dependency_list.num_dependencies; i++)
                 {
                     printf("%s=%s\n", dependency_list.dependencies[i].name, dependency_list.dependencies[i].version);
@@ -1433,7 +1439,8 @@ int npi_install(Config *config, const char *arg)
             int r = 0;
             if (read_dependencies(json_filepath, &dependency_list) == 0)
             {
-                printf("Dependencies:\n");
+                if (dependency_list.num_dependencies > 0)
+                    printf("Dependencies:\n");
                 for (int i = 0; i < dependency_list.num_dependencies; i++)
                 {
                     printf("%s=%s\n", dependency_list.dependencies[i].name, dependency_list.dependencies[i].version);
