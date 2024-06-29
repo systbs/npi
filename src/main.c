@@ -10,7 +10,6 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #include "./dirent_win.h"
-#define mkdir _mkdir
 #else
 #include <dirent.h>
 #include <sys/types.h>
@@ -364,7 +363,14 @@ int create_directories(const char *dir)
         if (*p == '/')
         {
             *p = '\0';
-            if (mkdir(tmp, 0755) && errno != EEXIST)
+            if (mkdir(tmp
+
+#if !defined(_WIN32) || !defined(_WIN64)
+                      ,
+                      0755
+#endif
+                      ) &&
+                errno != EEXIST)
             {
                 perror("mkdir");
                 return -1;
@@ -372,7 +378,13 @@ int create_directories(const char *dir)
             *p = '/';
         }
     }
-    if (mkdir(tmp, 0755) && errno != EEXIST)
+    if (mkdir(tmp
+#if !defined(_WIN32) || !defined(_WIN64)
+              ,
+              0755
+#endif
+              ) &&
+        errno != EEXIST)
     {
         perror("mkdir");
         return -1;
@@ -387,7 +399,7 @@ int unzip_file(const char *zip_path, const char *dest_path)
     if (!za)
     {
         char errbuf[1024];
-        zip_error_to_str(errbuf, sizeof(errbuf), err, errno);
+        // zip_error_to_str(errbuf, sizeof(errbuf), err, errno);
         fprintf(stderr, "Failed to open zip file %s: %s\n", zip_path, errbuf);
         return -1;
     }
