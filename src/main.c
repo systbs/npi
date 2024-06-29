@@ -309,7 +309,7 @@ int progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_
     return 0;
 }
 
-int download_file(const char *url, const char *output_path)
+int download_file(const char *url, const char *proxy, const char *output_path)
 {
     CURL *curl;
     FILE *fp;
@@ -329,6 +329,9 @@ int download_file(const char *url, const char *output_path)
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L); // Enable progress meter
+        // Set proxy
+        curl_easy_setopt(curl, CURLOPT_PROXY, proxy);
+
         res = curl_easy_perform(curl);
         printf("\n"); // Move to the next line after progress is complete
         curl_easy_cleanup(curl);
@@ -341,6 +344,7 @@ int download_file(const char *url, const char *output_path)
     }
     return -1;
 }
+
 int file_exists(const char *path)
 {
     struct stat st;
@@ -528,7 +532,7 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
     return realsize;
 }
 
-int fetch_json_data(const char *url, char **json_data)
+int fetch_json_data(const char *url, const char *proxy, char **json_data)
 {
     CURL *curl;
     CURLcode res;
@@ -548,6 +552,9 @@ int fetch_json_data(const char *url, char **json_data)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+    // Set proxy
+    curl_easy_setopt(curl, CURLOPT_PROXY, proxy);
 
     res = curl_easy_perform(curl);
 
@@ -648,6 +655,7 @@ typedef struct
     char lib_path[MAX_PATH_LENGTH];
     char cache_path[MAX_PATH_LENGTH];
     char server[MAX_PATH_LENGTH];
+    char proxy[MAX_PATH_LENGTH];
 } Config;
 
 int read_app_config(const char *json_filepath, Config *config)
@@ -714,6 +722,23 @@ int read_app_config(const char *json_filepath, Config *config)
     }
     strcpy(config->server, server_str);
 
+    // Read proxy from JSON
+    json_t *proxy_json = json_object_get(root, "proxy");
+    if (!json_is_string(proxy_json))
+    {
+        fprintf(stderr, "Invalid JSON format: \"proxy\" is not a string.\n");
+        json_decref(root);
+        return 1;
+    }
+    const char *proxy_str = json_string_value(proxy_json);
+    if (strlen(proxy_str) >= MAX_PATH_LENGTH)
+    {
+        fprintf(stderr, "proxy exceeds maximum length.\n");
+        json_decref(root);
+        return 1;
+    }
+    strcpy(config->proxy, proxy_str);
+
     // Cleanup JSON object
     json_decref(root);
 
@@ -739,7 +764,7 @@ int npi_update(Config *config, const char *arg)
             construct_url(url, config->server, "packages", pkg_name, NULL);
 
             char *json_data = NULL;
-            if (fetch_json_data(url, &json_data) == 0)
+            if (fetch_json_data(url, config->proxy, &json_data) == 0)
             {
                 Package download_pkg;
                 if (parse_downloaded_json(json_data, &download_pkg) < 0)
@@ -811,7 +836,7 @@ int npi_update(Config *config, const char *arg)
                         }
 
                         construct_url(url, config->server, "download", download_pkg.name, version_str);
-                        if (download_file(url, zip_filepath) == 0)
+                        if (download_file(url, config->proxy, zip_filepath) == 0)
                         {
                             printf("Package %s with version %s downloaded.\n", download_pkg.name, version_str);
                         }
@@ -904,7 +929,7 @@ int npi_update(Config *config, const char *arg)
             construct_url(url, config->server, "packages", pkg_name, pkg_version);
 
             char *json_data = NULL;
-            if (fetch_json_data(url, &json_data) == 0)
+            if (fetch_json_data(url, config->proxy, &json_data) == 0)
             {
                 Package download_pkg;
                 if (parse_downloaded_json(json_data, &download_pkg) < 0)
@@ -974,7 +999,7 @@ int npi_update(Config *config, const char *arg)
                     }
 
                     construct_url(url, config->server, "download", download_pkg.name, version_str);
-                    if (download_file(url, zip_filepath) == 0)
+                    if (download_file(url, config->proxy, zip_filepath) == 0)
                     {
                         printf("Package %s with version %s downloaded.\n", download_pkg.name, version_str);
                     }
@@ -1031,7 +1056,7 @@ int npi_update(Config *config, const char *arg)
         construct_url(url, config->server, "packages", pkg_name, pkg_version);
 
         char *json_data = NULL;
-        if (fetch_json_data(url, &json_data) == 0)
+        if (fetch_json_data(url, config->proxy, &json_data) == 0)
         {
             Package download_pkg;
             if (parse_downloaded_json(json_data, &download_pkg) < 0)
@@ -1101,7 +1126,7 @@ int npi_update(Config *config, const char *arg)
                 }
 
                 construct_url(url, config->server, "download", download_pkg.name, version_str);
-                if (download_file(url, zip_filepath) == 0)
+                if (download_file(url, config->proxy, zip_filepath) == 0)
                 {
                     printf("Package %s with version %s downloaded.\n", download_pkg.name, version_str);
                 }
@@ -1210,7 +1235,7 @@ int npi_install(Config *config, const char *arg)
         construct_url(url, config->server, "packages", pkg_name, pkg_version);
 
         char *json_data = NULL;
-        if (fetch_json_data(url, &json_data) == 0)
+        if (fetch_json_data(url, config->proxy, &json_data) == 0)
         {
             Package download_pkg;
             if (parse_downloaded_json(json_data, &download_pkg) < 0)
@@ -1280,7 +1305,7 @@ int npi_install(Config *config, const char *arg)
                 }
 
                 construct_url(url, config->server, "download", download_pkg.name, version_str);
-                if (download_file(url, zip_filepath) == 0)
+                if (download_file(url, config->proxy, zip_filepath) == 0)
                 {
                     printf("Package %s with version %s downloaded.\n", download_pkg.name, version_str);
                 }
@@ -1337,7 +1362,7 @@ int npi_install(Config *config, const char *arg)
         construct_url(url, config->server, "packages", pkg_name, pkg_version);
 
         char *json_data = NULL;
-        if (fetch_json_data(url, &json_data) == 0)
+        if (fetch_json_data(url, config->proxy, &json_data) == 0)
         {
             Package download_pkg;
             if (parse_downloaded_json(json_data, &download_pkg) < 0)
@@ -1407,7 +1432,7 @@ int npi_install(Config *config, const char *arg)
                 }
 
                 construct_url(url, config->server, "download", download_pkg.name, version_str);
-                if (download_file(url, zip_filepath) == 0)
+                if (download_file(url, config->proxy, zip_filepath) == 0)
                 {
                     printf("Package %s with version %s downloaded.\n", download_pkg.name, version_str);
                 }
